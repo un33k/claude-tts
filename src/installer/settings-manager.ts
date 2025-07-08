@@ -57,17 +57,18 @@ export class SettingsManager {
         settings.hooks[hookKey] = [];
       }
 
-      // Check if our hook is already installed
+      // Check if our STTS hook is already installed
+      const sttsHookPattern = /stts\/dist\/hooks\/|@ehaye\/stts|node .*\/stts\/dist\/hooks\//;
       const existing = settings.hooks[hookKey]!.find(h => 
-        h.hooks.some(hook => hook.command.includes(script))
+        h.hooks.some(hook => sttsHookPattern.test(hook.command))
       );
 
       if (!existing) {
         settings.hooks[hookKey]!.push(hookEntry);
         updated = true;
-        console.log(chalk.green(`✓ Installed ${name} hook`));
+        console.log(chalk.green(`✓ Installed STTS ${name} hook`));
       } else {
-        console.log(chalk.yellow(`⚠ ${name} hook already installed`));
+        console.log(chalk.yellow(`⚠ STTS ${name} hook already installed`));
       }
     }
 
@@ -88,29 +89,39 @@ export class SettingsManager {
     }
 
     let removed = false;
+    const sttsHookPattern = /stts\/dist\/hooks\/|@ehaye\/stts|node .*\/stts\/dist\/hooks\//;
 
-    // Remove STTS hooks from each hook type
+    // Remove only STTS-specific hooks from each hook type
     for (const hookType of Object.keys(settings.hooks)) {
       const hooks = settings.hooks[hookType as keyof typeof settings.hooks];
       if (!hooks) continue;
 
+      const originalLength = hooks.length;
       const filtered = hooks.filter(h => 
-        !h.hooks.some(hook => 
-          hook.command.includes('stts/dist/hooks/') ||
-          hook.command.includes('@ehaye/stts')
-        )
+        !h.hooks.some(hook => sttsHookPattern.test(hook.command))
       );
 
-      if (filtered.length < hooks.length) {
-        settings.hooks[hookType as keyof typeof settings.hooks] = filtered.length > 0 ? filtered : undefined;
+      if (filtered.length < originalLength) {
+        // Only update if we actually removed something
+        if (filtered.length > 0) {
+          settings.hooks[hookType as keyof typeof settings.hooks] = filtered;
+        } else {
+          // Only delete the hook type if it's now empty AND we removed something
+          delete settings.hooks[hookType as keyof typeof settings.hooks];
+        }
         removed = true;
-        console.log(chalk.green(`✓ Removed ${hookType} hook`));
+        console.log(chalk.green(`✓ Removed STTS ${hookType} hook`));
       }
+    }
+
+    // Clean up empty hooks object
+    if (settings.hooks && Object.keys(settings.hooks).length === 0) {
+      delete settings.hooks;
     }
 
     if (removed) {
       await this.saveSettings(settings);
-      console.log(chalk.green(`\n✓ Settings updated: ${this.settingsPath}`));
+      console.log(chalk.green(`\n✓ STTS hooks removed from: ${this.settingsPath}`));
     } else {
       console.log(chalk.yellow('No STTS hooks found to remove'));
     }

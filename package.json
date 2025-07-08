@@ -1,43 +1,49 @@
 {
-  "name": "@claude-code/tts",
+  "name": "@ehaye/stts",
   "version": "1.0.0",
-  "description": "Text-to-Speech plugin for Claude Code with multiple provider support",
+  "description": "Smart Text-to-Speech installer for various development tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "bin": {
-    "claude-tts": "dist/bin/cli.js",
-    "claude-tts-install": "dist/bin/install.js"
+    "stts": "dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc",
+    "dev": "node dev.js",
+    "dev:build": "tsc --watch",
     "prepublishOnly": "npm run build",
-    "postinstall": "node -e \"try { require('./dist/bin/install.js') } catch (e) { console.log('Skipping postinstall hook (not built yet)') }\"",
-    "setup": "npm run build && node dist/bin/install.js",
-    "test": "jest",
-    "test:install": "./test-install.sh",
-    "test:quick": "npx claude-tts speak 'Quick test'",
-    "test:providers": "npx claude-tts list"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist",
+    "prepack": "npm run clean && npm run build"
   },
-  "keywords": ["claude-code", "tts", "text-to-speech", "ai"],
-  "author": "Your Name",
+  "keywords": ["tts", "text-to-speech", "claude-code", "developer-tools", "hooks"],
+  "author": "ehaye",
   "license": "MIT",
   "dependencies": {
+    "commander": "^11.0.0",
+    "chalk": "^4.1.2",
     "dotenv": "^16.0.0",
     "axios": "^1.6.0",
-    "say": "^0.16.0",
-    "commander": "^11.0.0",
-    "chalk": "^4.1.2"
+    "winston": "^3.11.0",
+    "which": "^4.0.0",
+    "glob": "^10.3.10",
+    "say": "^0.16.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/which": "^3.0.0",
+    "@types/jest": "^29.0.0",
     "typescript": "^5.0.0",
+    "tsx": "^4.6.2",
     "jest": "^29.0.0",
-    "@types/jest": "^29.0.0"
-  },
-  "optionalDependencies": {
-    "@elevenlabs/elevenlabs-js": "^0.1.0",
-    "openai": "^4.20.0"
+    "ts-jest": "^29.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0"
   },
   "files": [
     "dist/**/*",
