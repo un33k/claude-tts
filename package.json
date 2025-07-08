@@ -1,0 +1,47 @@
+{
+  "name": "@claude-code/tts",
+  "version": "1.0.0",
+  "description": "Text-to-Speech plugin for Claude Code with multiple provider support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "bin": {
+    "claude-tts": "dist/bin/cli.js",
+    "claude-tts-install": "dist/bin/install.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "postinstall": "node -e \"try { require('./dist/bin/install.js') } catch (e) { console.log('Skipping postinstall hook (not built yet)') }\"",
+    "setup": "npm run build && node dist/bin/install.js",
+    "test": "jest",
+    "test:install": "./test-install.sh",
+    "test:quick": "npx claude-tts speak 'Quick test'",
+    "test:providers": "npx claude-tts list"
+  },
+  "keywords": ["claude-code", "tts", "text-to-speech", "ai"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "axios": "^1.6.0",
+    "say": "^0.16.0",
+    "commander": "^11.0.0",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  },
+  "optionalDependencies": {
+    "@elevenlabs/elevenlabs-js": "^0.1.0",
+    "openai": "^4.20.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ]
+}
