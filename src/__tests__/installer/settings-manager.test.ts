@@ -1,6 +1,4 @@
 import { jest } from '@jest/globals';
-import { SettingsManager } from '../../installer/settings-manager.js';
-import { promises as fs } from 'fs';
 
 // Mock fs promises
 const mockReadFile = jest.fn() as any;
@@ -14,6 +12,12 @@ jest.mock('fs', () => ({
   }
 }));
 
+// Mock path
+jest.mock('path', () => ({
+  dirname: jest.fn(() => '/test'),
+  join: jest.fn((...args) => args.join('/'))
+}));
+
 // Mock chalk to avoid color codes in tests
 jest.mock('chalk', () => ({
   default: {
@@ -23,6 +27,9 @@ jest.mock('chalk', () => ({
     red: (str: string) => str
   }
 }));
+
+// Now import the module under test
+import { SettingsManager } from '../../installer/settings-manager.js';
 
 describe('SettingsManager', () => {
   let manager: SettingsManager;
@@ -138,6 +145,7 @@ describe('SettingsManager', () => {
 
       await manager.removeHooks();
 
+      expect(mockWriteFile).toHaveBeenCalled();
       const savedSettings = JSON.parse(mockWriteFile.mock.calls[0][1] as string);
       expect(savedSettings.hooks.Notification).toHaveLength(1);
       expect(savedSettings.hooks.Notification[0].hooks[0].command).toBe('other-command');
@@ -160,18 +168,19 @@ describe('SettingsManager', () => {
 
       await manager.removeHooks();
 
+      expect(mockWriteFile).toHaveBeenCalled();
       const savedSettings = JSON.parse(mockWriteFile.mock.calls[0][1] as string);
       expect(savedSettings.hooks.Notification).toBeUndefined();
     });
 
     it('should handle no hooks to remove', async () => {
-      const settings = { hooks: {} };
+      const settings = {}; // No hooks object at all
       mockReadFile.mockResolvedValueOnce(JSON.stringify(settings));
 
       const consoleSpy = jest.spyOn(console, 'log');
       await manager.removeHooks();
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('No STTS hooks found'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('No hooks found to remove'));
       expect(mockWriteFile).not.toHaveBeenCalled();
     });
   });
