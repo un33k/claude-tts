@@ -1,7 +1,7 @@
 {
-  "name": "@ehaye/stts",
+  "name": "@eh-aye/stts",
   "version": "1.0.0",
-  "description": "Smart Text-to-Speech installer for various development tools",
+  "description": "Smart Text-to-Speech (TTS) integration for Claude Code and other development tools. Hear notifications, tool executions, and more with multiple voice providers.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -12,7 +12,8 @@
     "build": "tsc",
     "dev": "node dev.js",
     "dev:build": "tsc --watch",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run build && node scripts/prepublish.js",
+    "validate": "node scripts/prepublish.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
@@ -20,9 +21,23 @@
     "clean": "rm -rf dist",
     "prepack": "npm run clean && npm run build"
   },
-  "keywords": ["tts", "text-to-speech", "claude-code", "developer-tools", "hooks"],
-  "author": "ehaye",
+  "keywords": ["tts", "text-to-speech", "claude-code", "developer-tools", "hooks", "voice", "notifications", "elevenlabs", "openai", "accessibility"],
+  "author": {
+    "name": "Val Neekman",
+    "email": "val@neekware.com"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ehaye/stts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ehaye/stts/issues"
+  },
+  "homepage": "https://github.com/ehaye/stts#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "commander": "^11.0.0",
     "chalk": "^4.1.2",

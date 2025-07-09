@@ -55,7 +55,7 @@ echo '{"message": "Test"}' | npx claude-tts hook --gender male --priority say,op
 Create a test file `test.js`:
 
 ```javascript
-import { loadTTS } from '@ehaye/stts';
+import { loadTTS } from '@eh-aye/stts';
 
 async function test() {
   const tts = loadTTS();

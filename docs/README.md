@@ -12,7 +12,7 @@ Welcome to the STTS documentation! Here you'll find detailed technical informati
 ## Quick Links
 
 - [GitHub Repository](https://github.com/ehaye/stts)
-- [NPM Package](https://www.npmjs.com/package/@ehaye/stts)
+- [NPM Package](https://www.npmjs.com/package/@eh-aye/stts)
 - [Issue Tracker](https://github.com/ehaye/stts/issues)
 
 ## For Contributors

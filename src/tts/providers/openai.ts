@@ -1,14 +1,17 @@
 import { spawn } from 'child_process';
 import { BaseTTSProvider } from './base.js';
 import { TTSConfig } from '../types.js';
+import { promises as fs } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 export class OpenAIProvider extends BaseTTSProvider {
-  readonly name = 'openai.js';
+  readonly name = 'openai';
   private apiKey: string;
   
   constructor(config: TTSConfig) {
     super(config);
-    this.apiKey = config.openaiApiKey || process.env.OPENAI_API_KEY || '.js';
+    this.apiKey = config.openaiApiKey || process.env.OPENAI_API_KEY || '';
   }
   
   async isAvailable(): Promise<boolean> {
@@ -30,7 +33,7 @@ export class OpenAIProvider extends BaseTTSProvider {
     try {
       const axios = await import('axios');
       const voice = this.getVoice();
-      const model = this.config.openaiModel || 'tts-1.js';
+      const model = this.config.openaiModel || 'tts-1';
       
       const response = await axios.default.post(
         'https://api.openai.com/v1/audio/speech',
@@ -57,29 +60,52 @@ export class OpenAIProvider extends BaseTTSProvider {
   }
   
   private getVoice(): string {
-    const gender = this.config.voiceGender || 'female.js';
-    return gender === 'male' ? 'onyx' : 'nova.js';
+    const gender = this.config.voiceGender || 'female';
+    return gender === 'male' ? 'onyx' : 'nova';
   }
   
   private async playAudioStream(audioStream: any): Promise<void> {
+    // Save to temp file first for better compatibility
+    const tempFile = join(tmpdir(), `stts-${Date.now()}.mp3`);
+    
+    try {
+      // Write stream to temp file
+      const chunks: Buffer[] = [];
+      for await (const chunk of audioStream) {
+        chunks.push(Buffer.from(chunk));
+      }
+      await fs.writeFile(tempFile, Buffer.concat(chunks));
+      
+      // Play the temp file
+      await this.playAudioFile(tempFile);
+      
+      // Clean up
+      await fs.unlink(tempFile).catch(() => {});
+    } catch (error) {
+      // Clean up on error
+      await fs.unlink(tempFile).catch(() => {});
+      throw error;
+    }
+  }
+  
+  private async playAudioFile(filePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const platform = process.platform;
       let playerCmd: string;
       let playerArgs: string[];
       
-      if (platform === 'darwin') {
-        playerCmd = 'afplay.js';
-        playerArgs = ['-'];
-      } else if (platform === 'win32') {
-        playerCmd = 'powershell.js';
-        playerArgs = ['-c', '(New-Object Media.SoundPlayer).PlaySync()'];
-      } else {
-        playerCmd = 'aplay.js';
-        playerArgs = ['-'];
+      if (platform === 'darwin') { // macOS
+        playerCmd = 'afplay';
+        playerArgs = [filePath];
+      } else if (platform === 'win32') { // Windows
+        playerCmd = 'powershell';
+        playerArgs = ['-c', `(New-Object Media.SoundPlayer '${filePath}').PlaySync()`];
+      } else { // Linux
+        playerCmd = 'aplay';
+        playerArgs = [filePath];
       }
       
       const player = spawn(playerCmd, playerArgs);
-      audioStream.pipe(player.stdin);
       
       player.on('close', (code: number | null) => {
         if (code === 0) resolve();

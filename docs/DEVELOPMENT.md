@@ -1,4 +1,4 @@
-# Development Guide for @ehaye/stts
+# Development Guide for @eh-aye/stts
 
 ## Quick Start for Development
 

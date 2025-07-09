@@ -1,4 +1,8 @@
-# @ehaye/stts - Hear Your Code Speak! 🔊
+# @eh-aye/stts - (A.I. Smart Text-to-Speech) Hear Your Code Speak! 🔊
+
+[![npm version](https://badge.fury.io/js/@ehaye%2Fstts.svg)](https://www.npmjs.com/package/@eh-aye/stts)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/node/v/@eh-aye/stts.svg)](https://nodejs.org)
 
 Make Claude Code talk to you! Get audio notifications when tasks complete, tools run, and more.
 
@@ -15,7 +19,7 @@ STTS (Smart Text-to-Speech) adds voice notifications to Claude Code. It's like h
 
 ### 1. Install STTS
 ```bash
-npm install -g @ehaye/stts
+npm install -g @eh-aye/stts
 ```
 
 ### 2. Enable for Claude Code
@@ -66,10 +70,11 @@ TTS_VOICE_GENDER=male
 
 STTS automatically uses the best available voice:
 
-1. **System Voice** (Default) - Free, works offline
-   - Mac: Samantha/Alex
-   - Windows: Zira/David  
+1. **Local Audio** (Default) - Free, works offline
+   - Mac: Samantha/Alex (via system TTS)
+   - Windows: Zira/David (via SAPI)
    - Linux: espeak voices
+   - Powered by the `say` npm package
 
 2. **ElevenLabs** (Premium) - Natural, high-quality voices
 3. **OpenAI** (Premium) - Clear, professional voices
@@ -106,7 +111,7 @@ STTS automatically uses the best available voice:
 stts disable claude-code
 
 # Uninstall STTS completely
-npm uninstall -g @ehaye/stts
+npm uninstall -g @eh-aye/stts
 ```
 
 ---

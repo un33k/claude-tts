@@ -139,7 +139,7 @@ program
         const hasHooks = settings.hooks && Object.keys(settings.hooks).some(key => 
           settings.hooks[key]?.some((h: any) => 
             h.hooks?.some((hook: any) => 
-              hook.command?.includes('stts') || hook.command?.includes('@ehaye/stts')
+              hook.command?.includes('stts') || hook.command?.includes('@eh-aye/stts')
             )
           )
         );

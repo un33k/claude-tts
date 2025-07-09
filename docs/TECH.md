@@ -1,4 +1,4 @@
-# Technical Documentation for @ehaye/stts
+# Technical Documentation for @eh-aye/stts
 
 ## Architecture Overview
 
@@ -144,6 +144,16 @@ export class NewHook extends BaseHook {
 3. Create corresponding test file
 
 ### Provider System
+
+#### TTS Provider Details
+
+**Local Audio Provider (`say`)**
+The local audio provider uses the `say` npm package which provides cross-platform text-to-speech:
+- **macOS**: Uses system `NSSpeechSynthesizer` API
+- **Windows**: Uses Windows SAPI (Speech API)
+- **Linux**: Uses `espeak` or `festival`
+
+Note: While we refer to this as "Local Audio" in user documentation for clarity, the actual implementation uses the `say` npm package.
 
 #### Adding TTS Providers
 

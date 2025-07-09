@@ -1,14 +1,17 @@
 import { spawn } from 'child_process';
 import { BaseTTSProvider } from './base.js';
 import { TTSConfig } from '../types.js';
+import { promises as fs } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 export class ElevenLabsProvider extends BaseTTSProvider {
-  readonly name = 'elevenlabs.js';
+  readonly name = 'elevenlabs';
   private apiKey: string;
   
   constructor(config: TTSConfig) {
     super(config);
-    this.apiKey = config.elevenLabsApiKey || process.env.ELEVENLABS_API_KEY || '.js';
+    this.apiKey = config.elevenLabsApiKey || process.env.ELEVENLABS_API_KEY || '';
   }
   
   async isAvailable(): Promise<boolean> {
@@ -66,31 +69,52 @@ export class ElevenLabsProvider extends BaseTTSProvider {
     }
     
     // Default voices
-    const gender = this.config.voiceGender || 'female.js';
+    const gender = this.config.voiceGender || 'female';
     return gender === 'male' ? 'ErXwobaYiN019PkySvjV' : 'EXAVITQu4vr4xnSDxMaL'; // Antoni : Rachel
   }
   
   private async playAudioStream(audioStream: any): Promise<void> {
+    // Save to temp file first for better compatibility
+    const tempFile = join(tmpdir(), `stts-${Date.now()}.mp3`);
+    
+    try {
+      // Write stream to temp file
+      const chunks: Buffer[] = [];
+      for await (const chunk of audioStream) {
+        chunks.push(Buffer.from(chunk));
+      }
+      await fs.writeFile(tempFile, Buffer.concat(chunks));
+      
+      // Play the temp file
+      await this.playAudioFile(tempFile);
+      
+      // Clean up
+      await fs.unlink(tempFile).catch(() => {});
+    } catch (error) {
+      // Clean up on error
+      await fs.unlink(tempFile).catch(() => {});
+      throw error;
+    }
+  }
+  
+  private async playAudioFile(filePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Try different audio players based on platform
       const platform = process.platform;
       let playerCmd: string;
       let playerArgs: string[];
       
       if (platform === 'darwin') { // macOS
-        playerCmd = 'afplay.js';
-        playerArgs = ['-'];
+        playerCmd = 'afplay';
+        playerArgs = [filePath];
       } else if (platform === 'win32') { // Windows
-        playerCmd = 'powershell.js';
-        playerArgs = ['-c', '(New-Object Media.SoundPlayer).PlaySync()'];
+        playerCmd = 'powershell';
+        playerArgs = ['-c', `(New-Object Media.SoundPlayer '${filePath}').PlaySync()`];
       } else { // Linux
-        playerCmd = 'aplay.js';
-        playerArgs = ['-'];
+        playerCmd = 'aplay';
+        playerArgs = [filePath];
       }
       
       const player = spawn(playerCmd, playerArgs);
-      
-      audioStream.pipe(player.stdin);
       
       player.on('close', (code: number | null) => {
         if (code === 0) resolve();
