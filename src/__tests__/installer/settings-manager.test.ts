@@ -1,22 +1,22 @@
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 
 // Mock fs promises
-jest.mock('fs', () => ({
+vi.mock('fs', () => ({
   promises: {
-    readFile: jest.fn(),
-    writeFile: jest.fn(),
-    mkdir: jest.fn()
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+    mkdir: vi.fn()
   }
 }));
 
 // Mock path
-jest.mock('path', () => ({
-  dirname: jest.fn(() => '/test'),
-  join: jest.fn((...args) => args.join('/'))
+vi.mock('path', () => ({
+  dirname: vi.fn(() => '/test'),
+  join: vi.fn((...args) => args.join('/'))
 }));
 
 // Mock chalk to avoid color codes in tests
-jest.mock('chalk', () => ({
+vi.mock('chalk', () => ({
   default: {
     green: (str: string) => str,
     yellow: (str: string) => str,
@@ -30,23 +30,23 @@ import { SettingsManager } from '../../installer/settings-manager.js';
 import { promises as fs } from 'fs';
 
 // Get the mocked functions
-const mockReadFile = jest.mocked(fs.readFile);
-const mockWriteFile = jest.mocked(fs.writeFile);
-const mockMkdir = jest.mocked(fs.mkdir);
+const mockReadFile = vi.mocked(fs.readFile);
+const mockWriteFile = vi.mocked(fs.writeFile);
+const mockMkdir = vi.mocked(fs.mkdir);
 
 describe('SettingsManager', () => {
   let manager: SettingsManager;
   const mockSettingsPath = '/test/.claude/settings.json';
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     manager = new SettingsManager(mockSettingsPath);
   });
 
   describe('loadSettings', () => {
     it('should load existing settings', async () => {
       const mockSettings = { hooks: { Notification: [] } };
-      mockReadFile.mockImplementation(() => Promise.resolve(JSON.stringify(mockSettings) as any));
+      mockReadFile.mockResolvedValue(JSON.stringify(mockSettings) as any);
 
       const settings = await manager.loadSettings();
 
@@ -55,7 +55,7 @@ describe('SettingsManager', () => {
     });
 
     it('should return empty object when file does not exist', async () => {
-      mockReadFile.mockImplementation(() => Promise.reject(new Error('ENOENT')));
+      mockReadFile.mockRejectedValue(new Error('ENOENT'));
 
       const settings = await manager.loadSettings();
 
@@ -65,9 +65,9 @@ describe('SettingsManager', () => {
 
   describe('installHooks', () => {
     it('should install new hooks when none exist', async () => {
-      mockReadFile.mockRejectedValueOnce(new Error('ENOENT') as any);
-      mockMkdir.mockResolvedValueOnce(undefined as any);
-      mockWriteFile.mockResolvedValueOnce(undefined as any);
+      mockReadFile.mockRejectedValue(new Error('ENOENT'));
+      mockMkdir.mockResolvedValue(undefined as any);
+      mockWriteFile.mockResolvedValue(undefined as any);
 
       await manager.installHooks('/test/hooks');
 
@@ -90,9 +90,9 @@ describe('SettingsManager', () => {
           }]
         }
       };
-      mockReadFile.mockResolvedValueOnce(JSON.stringify(existingSettings) as any);
+      mockReadFile.mockResolvedValue(JSON.stringify(existingSettings) as any);
 
-      const consoleSpy = jest.spyOn(console, 'log');
+      const consoleSpy = vi.spyOn(console, 'log');
       await manager.installHooks('/test/hooks');
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('already installed'));
@@ -110,8 +110,8 @@ describe('SettingsManager', () => {
           }]
         }
       };
-      mockReadFile.mockResolvedValueOnce(JSON.stringify(existingSettings) as any);
-      mockWriteFile.mockResolvedValueOnce(undefined as any);
+      mockReadFile.mockResolvedValue(JSON.stringify(existingSettings) as any);
+      mockWriteFile.mockResolvedValue(undefined as any);
 
       await manager.installHooks('/test/hooks');
 
@@ -143,8 +143,8 @@ describe('SettingsManager', () => {
           ]
         }
       };
-      mockReadFile.mockResolvedValueOnce(JSON.stringify(settings) as any);
-      mockWriteFile.mockResolvedValueOnce(undefined as any);
+      mockReadFile.mockResolvedValue(JSON.stringify(settings) as any);
+      mockWriteFile.mockResolvedValue(undefined as any);
 
       await manager.removeHooks();
 
@@ -166,21 +166,21 @@ describe('SettingsManager', () => {
           }]
         }
       };
-      mockReadFile.mockResolvedValueOnce(JSON.stringify(settings) as any);
-      mockWriteFile.mockResolvedValueOnce(undefined as any);
+      mockReadFile.mockResolvedValue(JSON.stringify(settings) as any);
+      mockWriteFile.mockResolvedValue(undefined as any);
 
       await manager.removeHooks();
 
       expect(mockWriteFile).toHaveBeenCalled();
       const savedSettings = JSON.parse(mockWriteFile.mock.calls[0][1] as string);
-      expect(savedSettings.hooks.Notification).toBeUndefined();
+      expect(savedSettings.hooks?.Notification).toBeUndefined();
     });
 
     it('should handle no hooks to remove', async () => {
       const settings = {}; // No hooks object at all
-      mockReadFile.mockResolvedValueOnce(JSON.stringify(settings) as any);
+      mockReadFile.mockResolvedValue(JSON.stringify(settings) as any);
 
-      const consoleSpy = jest.spyOn(console, 'log');
+      const consoleSpy = vi.spyOn(console, 'log');
       await manager.removeHooks();
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('No hooks found to remove'));

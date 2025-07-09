@@ -1,4 +1,4 @@
-// Jest setup file
+// Vitest setup file
 // This file is run before all tests
 
 // Set up environment variables for testing

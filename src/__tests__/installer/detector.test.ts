@@ -1,32 +1,34 @@
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
+import { ToolDetector } from '../../installer/detector.js';
 
 // Mock modules before importing
-jest.mock('which', () => jest.fn());
-jest.mock('fs', () => ({
+vi.mock('which', () => ({
+  default: vi.fn()
+}));
+vi.mock('fs', () => ({
   promises: {
-    access: jest.fn()
+    access: vi.fn()
   }
 }));
-jest.mock('os', () => ({
-  homedir: jest.fn(() => '/home/test')
+vi.mock('os', () => ({
+  homedir: vi.fn(() => '/home/test')
 }));
 
-// Now import the module under test
-import { ToolDetector } from '../../installer/detector.js';
+// Now import the mocked modules
 import which from 'which';
 import { promises as fs } from 'fs';
 import { homedir } from 'os';
 
 // Get the mocked functions
-const mockWhich = which as jest.MockedFunction<typeof which>;
-const mockFsAccess = fs.access as jest.MockedFunction<typeof fs.access>;
-const mockHomedir = homedir as jest.MockedFunction<typeof homedir>;
+const mockWhich = vi.mocked(which);
+const mockFsAccess = vi.mocked(fs.access);
+const mockHomedir = vi.mocked(homedir);
 
 describe('ToolDetector', () => {
   let detector: ToolDetector;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     detector = new ToolDetector();
   });
 
@@ -44,16 +46,35 @@ describe('ToolDetector', () => {
       });
     });
 
-    it.skip('should not detect claude-code when executable is missing', async () => {
-      // Skip this test - mocking 'which' in ESM Jest is complex
+    it('should not detect claude-code when executable is missing', async () => {
+      mockWhich.mockRejectedValueOnce(new Error('not found'));
+      mockWhich.mockRejectedValueOnce(new Error('not found')); // Also mock the fallback to 'claude'
+      
+      const results = await detector.detect('claude-code');
+      
+      expect(results).toHaveLength(1);
+      expect(results[0].detected).toBe(false);
     });
 
-    it.skip('should fall back to claude when claude-code is not found', async () => {
-      // Skip this test - mocking 'which' in ESM Jest is complex
+    it('should fall back to claude when claude-code is not found', async () => {
+      mockWhich
+        .mockRejectedValueOnce(new Error('not found')) // claude-code
+        .mockResolvedValueOnce('/usr/local/bin/claude'); // claude fallback
+      
+      const results = await detector.detect('claude-code');
+      
+      expect(results[0].detected).toBe(true);
     });
 
-    it.skip('should detect all tools when no specific tool is provided', async () => {
-      // Skip this test - mocking 'which' in ESM Jest is complex
+    it('should detect all tools when no specific tool is provided', async () => {
+      mockWhich
+        .mockResolvedValueOnce('/usr/local/bin/claude-code')
+        .mockResolvedValueOnce('/usr/local/bin/claude');
+      
+      const results = await detector.detect();
+      
+      expect(results.length).toBeGreaterThan(1);
+      expect(results.every(r => r.detected)).toBe(true);
     });
   });
 
@@ -63,12 +84,15 @@ describe('ToolDetector', () => {
       
       const path = await detector.getSettingsPath('claude-code');
       
-      // The actual path depends on the real homedir since the mock doesn't work during constructor
-      expect(path).toMatch(/\.claude\/settings\.json$/);
+      expect(path).toBe('/home/test/.claude/settings.json');
     });
 
-    it.skip('should return null when settings file does not exist', async () => {
-      // Skip this test - mocking fs.access in ESM Jest is complex
+    it('should return null when settings file does not exist', async () => {
+      mockFsAccess.mockRejectedValue(new Error('ENOENT'));
+      
+      const path = await detector.getSettingsPath('claude-code');
+      
+      expect(path).toBeNull();
     });
 
     it('should return null for unknown tool', async () => {
